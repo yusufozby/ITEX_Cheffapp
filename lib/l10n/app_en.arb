@@ -1,0 +1,16 @@
+{
+     "language": "Language",
+      "languageSelection":"Select your language",
+      "serviceDescription":"IP Server where the webservice is available",
+      "portDescription":"Port Server where the webservice is available" ,
+      "username":"User Name",
+      "password":"Password",
+      "usernameDesc":"User Name used to save data",
+      "passwordDesc":"Password used to save data",
+      "version":"version",
+      "ok":"OK",
+      "cancel":"CANCEL",
+      "loginTitle":"ITEX Soft Operation Control",
+     "userConfig":"Server Config",
+     "loginBtn":"Login"
+}

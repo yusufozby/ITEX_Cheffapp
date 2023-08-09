@@ -1,0 +1,17 @@
+{
+     "language": "Dil",
+  
+    "languageSelection":"Dilinizi seçin",
+    "serviceDescription":"Web Hizmetinin Kullanıldığı IP adresi",
+    "portDescription":"Web servisinin mevcut olduğu port sunucusu" ,
+    "username":"Kullanıcı Adı",
+    "password":"Şifre",
+    "usernameDesc":"Kaydedilen veriler için kullanılan kullanıcı adı",
+    "passwordDesc":"Kaydedilen veriler için kullanılan şifre",
+    "version":"versiyon",
+     "ok":"TAMAM",
+     "cancel":"İPTAL ET",
+     "loginTitle":"ITEX Soft Tablet Modulü",
+     "userConfig":"Ayarlar",
+     "loginBtn":"Giriş"
+}
