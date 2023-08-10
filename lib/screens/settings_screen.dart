@@ -258,21 +258,23 @@ void changePassword(){
 
 body:
 
-SafeArea(child: 
-Column(
-children: [
-SettingItem(setting:Setting(title: 'Server ID', subtitle: AppLocalizations.of(context)!.serviceDescription) , openModal:openServerId),
-SettingItem(setting:Setting(title: 'Port ID',subtitle:AppLocalizations.of(context)!.portDescription ) , openModal:openPortId),
-SettingItem(setting:Setting(title: AppLocalizations.of(context)!.language, subtitle: AppLocalizations.of(context)!.languageSelection) , openModal:openLanguage),  
-SettingItem(setting:Setting(title: AppLocalizations.of(context)!.username, subtitle: AppLocalizations.of(context)!.usernameDesc) , openModal:changeUsername), 
-SettingItem(setting:Setting(title: AppLocalizations.of(context)!.password, subtitle: AppLocalizations.of(context)!.passwordDesc) , openModal:changePassword), 
-ListTile(
-title: Text(AppLocalizations.of(context)!.version,style: TextStyle(fontSize: 20,color: Colors.grey.withOpacity(0.4)),),
-subtitle: Text('2.0.5',style: TextStyle(fontSize: 16,color: Colors.grey.withOpacity(0.8)),),
- shape: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.4),width: 1.5)),
-onTap:null,
-  ),
-] ,
-))
+SingleChildScrollView(
+  child:   SafeArea(child: 
+  Column(
+  children: [
+  SettingItem(setting:Setting(title: 'Server ID', subtitle: AppLocalizations.of(context)!.serviceDescription) , openModal:openServerId),
+  SettingItem(setting:Setting(title: 'Port ID',subtitle:AppLocalizations.of(context)!.portDescription ) , openModal:openPortId),
+  SettingItem(setting:Setting(title: AppLocalizations.of(context)!.language, subtitle: AppLocalizations.of(context)!.languageSelection) , openModal:openLanguage),  
+  SettingItem(setting:Setting(title: AppLocalizations.of(context)!.username, subtitle: AppLocalizations.of(context)!.usernameDesc) , openModal:changeUsername), 
+  SettingItem(setting:Setting(title: AppLocalizations.of(context)!.password, subtitle: AppLocalizations.of(context)!.passwordDesc) , openModal:changePassword), 
+  ListTile(
+  title: Text(AppLocalizations.of(context)!.version,style: TextStyle(fontSize: 20,color: Colors.grey.withOpacity(0.4)),),
+  subtitle: Text('2.0.5',style: TextStyle(fontSize: 16,color: Colors.grey.withOpacity(0.8)),),
+   shape: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.4),width: 1.5)),
+  onTap:null,
+    ),
+  ] ,
+  )),
+)
 );}
 }

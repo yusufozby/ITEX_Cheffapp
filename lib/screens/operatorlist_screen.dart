@@ -1,16 +1,19 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:itm_cheffapp/models/Employee.dart';
 import 'package:itm_cheffapp/screens/loading_spin.dart';
 import 'package:itm_cheffapp/screens/work_time_screen.dart';
+import 'package:itm_cheffapp/widgets/all_operators.dart';
 import 'package:itm_cheffapp/widgets/operator_item.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:http/http.dart' as http;
 class OperatorListScreen extends StatefulWidget {
-  const OperatorListScreen({super.key,required this.lineId,required this.lineName});
+  const OperatorListScreen({super.key,required this.lineId,required this.lineName,required this.userId});
   final int lineId;
   final String lineName;
+  final int userId;
 
 
 
@@ -23,8 +26,10 @@ class OperatorListScreen extends StatefulWidget {
 
 class _OperatorListScreenState extends State<OperatorListScreen> {
   bool isTimeSelected = false;
+  List lineEmployees=[];
    List<Employee> posts=[];
    List<Employee> constantList = [];
+   List<Employee> extractByEmployee=[];
    bool addOperatorLoading = false;
   
    bool isLoading = false;
@@ -32,15 +37,32 @@ Future<void> fetchOperators() async{
 setState(() {
   isLoading = true;
 });
-final response = await http.get(Uri.parse('http://192.168.1.48:5246/api/Auth'));
-final List temp = jsonDecode(response.body);
+final response = await http.get(Uri.parse('http://192.168.1.7:5246/api/Auth'));
+ List temp = jsonDecode(response.body);
+final lineEmployeeResponse = await http.get(Uri.parse('http://192.168.1.7:5246/api/lineEmployee'));
+List temp2= jsonDecode(lineEmployeeResponse.body);
+
+setState(() {
+  lineEmployees = temp2;
+});
+List lineEmployeeIdList=[];
+temp2 = temp2.where((element) => element['lineId'] == widget.lineId ).toList();
+for(int i = 0; i< temp2.length;i++){
+  lineEmployeeIdList.add(temp2[i]['employeeId']);
+}
+
+
+
+
 
 setState(() {
   for(int i = 0; i < temp.length;i++){
-    posts.add(Employee(NameSurname: temp[i]['fullName'], isSelected: false, id:temp[i]['id'] ));
-    constantList.add(Employee(NameSurname: temp[i]['fullName'], isSelected: false, id:temp[i]['id'] ));
+    posts.add(Employee(NameSurname: temp[i]['fullName'], id:temp[i]['id'] ));
+    constantList.add(Employee(NameSurname: temp[i]['fullName'], id:temp[i]['id'] ));
+    extractByEmployee.add(Employee(NameSurname: temp[i]['fullName'], id:temp[i]['id'] ));
   }  
-
+   posts =posts.where((element) => lineEmployeeIdList.contains(element.id) && element.id != widget.userId ).toList();
+   extractByEmployee =extractByEmployee.where((element) => lineEmployeeIdList.contains(element.id) && element.id != widget.userId ).toList();
    isLoading = false;
 });
 
@@ -48,28 +70,36 @@ setState(() {
 
 }
 
+
+
+ 
+
+
 void filterOperators(String search){
+  
   setState(() {
-    posts = constantList.where((element) => element.NameSurname.toLowerCase().contains(search.toLowerCase())).toList();
+    posts = extractByEmployee.where((element) => element.NameSurname.toLowerCase().contains(search.toLowerCase())).toList();
   });
 }
 
-void selectOperator(Employee employee){
- setState(() {
-   posts = posts.map((item)  
-   {
-   if(item.id == employee.id){
-    item.isSelected = !item.isSelected;
+void showNewList(List<Employee> employees){
+  setState(() {
+    for(int i = 0; i < employees.length;i++){
+      setState(() {
+        posts.add(employees[i]);
+      });
 
-   }
-   return item;
-   }
-   
-    ).toList();
-    }); 
+    }
+    posts =posts.map((e){
+e.isSelected = false;
+
+return e;
+    }).toList();
+  });
 
 }
-void addOperators() async{
+
+void startWorkTime() async{
  try {
 
  
@@ -87,10 +117,10 @@ return;
  final List<Employee> selectedPosts = posts.where((element) => element.isSelected).toList();
 if(selectedPosts.isEmpty){
     showDialog(context: context,useRootNavigator: false,builder: (context) =>AlertDialog(
-    title: Text('Hata'),content: Text('Herhangi bir operatör seçmediniz. Lütfen operatör seçin.'),actions: [
+    title:const Text('Hata'),content:const Text('Herhangi bir operatör seçmediniz. Lütfen operatör seçin.'),actions: [
       TextButton(onPressed: (){
         Navigator.of(context).pop();
-      }, child: Text('Ok'))
+      }, child:const Text('Ok'))
     ],
   ));
 }
@@ -102,7 +132,7 @@ if(selectedPosts.isEmpty){
  for(int i = 0; i < selectedPosts.length;i++){
 
  
-const url = 'http://192.168.1.48:5246/api/LineMovement';
+const url = 'http://192.168.1.7:5246/api/LineMovement';
   final response = await http.post(Uri.parse(url)
   ,body: jsonEncode({
   
@@ -119,14 +149,19 @@ const url = 'http://192.168.1.48:5246/api/LineMovement';
 
  } 
   setState(() {
+    posts = posts.map((item) {
+  item.isSelected = false;
+
+return item;
+    }  ).toList();
     addOperatorLoading = false;
   });
  }
  catch(e) {
   showDialog(context: context, builder:(ctx)=>
   AlertDialog(
-    content: Text('Günlük plan üretimi oluşturulmamış. Lütfen Çalışma vaktini başlatmadan önce Günlük plan üretimini oluşturun.',)
-    ,title: Text('Hata'),
+    content: const Text('Günlük plan üretimi oluşturulmamış. Lütfen Çalışma vaktini başlatmadan önce Günlük plan üretimini oluşturun.',)
+    ,title:const Text('Hata'),
     actions: [TextButton(onPressed: (){
       Navigator.of(context).pop();
            setState(() {
@@ -138,7 +173,21 @@ const url = 'http://192.168.1.48:5246/api/LineMovement';
   ));
  }
 }
+void selectOperator(Employee employee){
+ setState(() {
+posts = posts.map((item)  
+   {
+   if(item.id == employee.id){
+    item.isSelected = !item.isSelected;
 
+   }
+   return item;
+   }
+   
+    ).toList();
+    }); 
+
+}
 
 
 
@@ -158,6 +207,17 @@ final   minute = time.minute.toString().padLeft(2,'0');
 bool keyboardIsOpen = MediaQuery.of(context).viewInsets.bottom != 0;
 
     return isLoading  ? const LoadingSpin(addLoadingOperator: false,):  Scaffold(
+      floatingActionButtonLocation:FloatingActionButtonLocation.startFloat,
+      floatingActionButton:Visibility(visible: !keyboardIsOpen  && !addOperatorLoading,child:   FloatingActionButton(child: Icon(Icons.add,size: 30,),backgroundColor: Colors.green,onPressed: (){
+                              showModalBottomSheet(useSafeArea: true,backgroundColor: Colors.transparent,context: context,isScrollControlled: true, builder: (ctx) => 
+                              AllOperators(
+                                showNewList: showNewList,
+                                lineEmployees: lineEmployees,
+                                          employeesByLine: posts
+                                         ,employees: constantList,
+                                          lineId: widget.lineId,));
+                                   } )) 
+    ,
       body: SafeArea(child: 
 !addOperatorLoading ? 
 
@@ -198,7 +258,14 @@ labelText: "Operatör Ara",
         child:const Text('Operatör Listesi',style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),),
        ),
            Expanded(child:
-           ListView.builder(itemBuilder: (ctx,index) =>OperatorItem(selectOperator: selectOperator,index: index,employee: posts[index],),itemCount: posts.length,)
+           ListView.builder(shrinkWrap: true,physics:const NeverScrollableScrollPhysics(),itemBuilder: (ctx,index) =>
+           GestureDetector(
+            onTap: () {
+              selectOperator(posts[index]);
+            },
+            child: OperatorItem(index: index,employee: posts[index],),
+           )
+           ,itemCount: posts.length,)
            
        //     ListView.builder(itemBuilder: (ctx,i) =>OperatorItem(index: i,),itemCount: 40,))
              )   ],
@@ -210,31 +277,7 @@ labelText: "Operatör Ara",
                 children: [
                          
               
-                               Expanded(child:
-                               InkWell(
-                                onTap: () {
-                                  
-                                },
-                       
-                                child:    
-                                InkWell(
-                                  onTap: addOperators,
-                                  child:             Container(
-                
-     width: double.infinity, 
-     alignment: Alignment.center,
-     height: 80,
-     decoration:const BoxDecoration(
-      borderRadius: BorderRadius.all(Radius.circular(5)),
-      color: Colors.green
-     ),     
-child: Text('Ekle',style: TextStyle(fontSize: 16,letterSpacing: 0.2,color: Theme.of(context).colorScheme.onPrimary,fontWeight: FontWeight.bold)),            ) ,
-                                )
-                                
-                       ,
-                               )
-       
-              ),
+//                              
               const SizedBox(width: 5,),
                         Expanded(child:
       InkWell(
@@ -278,7 +321,7 @@ child: Column(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(!isTimeSelected ? 'Saat seç': '$hours:$minute'),
+          Text(!isTimeSelected ? 'Saat seç': '$hours:$minute',style:const TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
           InkWell(
             onTap: () async {
             
@@ -289,7 +332,7 @@ child: Column(
        isTimeSelected = true;
     });
             },
-            child:const Icon(Remix.time_fill,size: 20),
+            child:const Icon(Remix.time_fill,size: 30),
           )
         //  showTimePicker(context: context, initialTime: TimeOfDay.now())  ;
        
@@ -301,9 +344,7 @@ child: Column(
         const SizedBox(height: 15,),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(onPressed: (){
-            Navigator.push(context, MaterialPageRoute(builder: (ctx)=>const WorkTimeScreen()));
-          },style: ElevatedButton.styleFrom(
+          child: ElevatedButton(onPressed: startWorkTime,style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
             padding: const EdgeInsets.symmetric(vertical: 15),
             shape: const RoundedRectangleBorder(

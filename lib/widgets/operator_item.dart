@@ -2,19 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:itm_cheffapp/models/Employee.dart';
 
 class OperatorItem extends StatelessWidget {
-  const OperatorItem({super.key,required this.index,required this.employee,required this.selectOperator});
+  const OperatorItem({super.key,required this.index,required this.employee});
   final int index;
   final Employee employee;
-  final Function(Employee employee) selectOperator;
+
 
   @override
   Widget build(BuildContext context) {
     return
-   GestureDetector(
-      onTap: () {
-        selectOperator(employee);
-      },
-      child:  Container(
+    Container(
      
 
      
@@ -33,8 +29,8 @@ class OperatorItem extends StatelessWidget {
      
       Padding(padding: EdgeInsets.all(10),child:Text(employee.NameSurname,style: TextStyle(color:employee.isSelected ? Colors.white : Colors.black, ),) ,)
       ,
-    )  ,
-    )
+    )  
+    
 
     
     

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:itm_cheffapp/screens/linelist_screen.dart';
 import 'package:http/http.dart' as http;
+import 'package:itm_cheffapp/screens/tabs_screen.dart';
 class LoginForm extends StatefulWidget {
  
   const LoginForm({super.key});
@@ -28,14 +29,15 @@ String message = "";
 
   Future<void> login() async{
 try {
-var url = 'http://192.168.1.48:5246/api/Auth';
+var url = 'http://192.168.1.7:5246/api/Auth';
 
  final response = await http.post(Uri.parse(url)
 
  ,headers: <String,String>{'Content-Type':'application/json'}
  ,body: jsonEncode( {
   'Username':usernameController.text.toString(),
- 'Password':passwordController.text.toString()}
+ 'Password':passwordController.text.toString(),
+ 'Job':'Sef'}
  ))
 ;
 
@@ -49,9 +51,10 @@ var url = 'http://192.168.1.48:5246/api/Auth';
 }
  else {
 
+int lineId =  jsonDecode(response.body)['id'];
+print(lineId);
 
-
-   Navigator.of(context).push(MaterialPageRoute(builder: (ctx) =>const LineListScreen()));
+   Navigator.of(context).push(MaterialPageRoute(builder: (ctx) =>TabsScreen(lineId: lineId,)));
     setState(() {
    isError = false;
 
