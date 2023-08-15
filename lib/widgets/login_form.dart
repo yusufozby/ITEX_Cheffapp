@@ -1,18 +1,21 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:itm_cheffapp/screens/linelist_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:itm_cheffapp/providers/connection_provider.dart';
+
 import 'package:http/http.dart' as http;
+import 'package:itm_cheffapp/screens/linelist_screen.dart';
 import 'package:itm_cheffapp/screens/tabs_screen.dart';
-class LoginForm extends StatefulWidget {
+class LoginForm extends ConsumerStatefulWidget {
  
   const LoginForm({super.key});
 
   @override
-  State<LoginForm> createState() => _LoginFormState();
+  ConsumerState<LoginForm> createState() => _LoginFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
+class _LoginFormState extends ConsumerState<LoginForm> {
   final usernameController = TextEditingController();
     final passwordController = TextEditingController();
 bool isError = false;
@@ -27,9 +30,9 @@ String message = "";
   }
   @override
 
-  Future<void> login() async{
+  Future<void> login(String server,String port) async{
 try {
-var url = 'http://192.168.1.7:5246/api/Auth';
+var url = 'http://$server:$port/api/Auth';
 
  final response = await http.post(Uri.parse(url)
 
@@ -54,7 +57,7 @@ var url = 'http://192.168.1.7:5246/api/Auth';
 int lineId =  jsonDecode(response.body)['id'];
 print(lineId);
 
-   Navigator.of(context).push(MaterialPageRoute(builder: (ctx) =>TabsScreen(lineId: lineId,)));
+   Navigator.of(context).push(MaterialPageRoute(builder: (ctx) =>LineListScreen(userId: lineId)));
     setState(() {
    isError = false;
 
@@ -130,7 +133,9 @@ Visibility(visible: isError,child:
   Center(child: Text(message,style:const TextStyle(color: Colors.red,fontSize: 20),),),),
      const  SizedBox(height: 20,),
 
-      ElevatedButton(onPressed: login
+      ElevatedButton(onPressed: (){
+        login(ref.watch(connectionProvider)['server'], ref.watch(connectionProvider)['port']);
+      }
        ,
        style: ElevatedButton.styleFrom(padding:constraitsWidth >= 750 ? const EdgeInsets.all(20): const EdgeInsets.all(10) ,foregroundColor: Theme.of(context).colorScheme.background,
        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),

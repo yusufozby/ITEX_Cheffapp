@@ -17,17 +17,17 @@ class OperatorItem extends StatelessWidget {
   decoration: BoxDecoration(
     color: employee.isSelected ? Colors.blue : Colors.white,
       border:Border(
-      bottom: BorderSide(color: Colors.grey),
-      left: BorderSide(color: Colors.grey),
-      right: BorderSide(color: Colors.grey),
-      top: index == 0 ? BorderSide(color: Colors.grey) : BorderSide(width: 0,color: Colors.grey)
+      bottom:const BorderSide(color: Colors.grey),
+      left:const BorderSide(color: Colors.grey),
+      right:const BorderSide(color: Colors.grey),
+      top: index == 0 ?const BorderSide(color: Colors.grey) :const BorderSide(width: 0,color: Colors.grey)
       )
     ),
     child: 
      
      
      
-      Padding(padding: EdgeInsets.all(10),child:Text(employee.NameSurname,style: TextStyle(color:employee.isSelected ? Colors.white : Colors.black, ),) ,)
+      Padding(padding:const EdgeInsets.all(10),child:Text(employee.NameSurname,style: TextStyle(color:employee.isSelected ? Colors.white : Colors.black, ),) ,)
       ,
     )  
     

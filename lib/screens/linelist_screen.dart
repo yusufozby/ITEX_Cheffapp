@@ -1,52 +1,110 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-import 'package:itm_cheffapp/screens/operatorlist_screen.dart';
 import 'package:http/http.dart' as http;
-class LineListScreen extends StatefulWidget {
+import 'package:itm_cheffapp/providers/connection_provider.dart';
+import 'package:itm_cheffapp/providers/line_provider.dart';
+import 'package:itm_cheffapp/screens/loading_spin.dart';
+import 'package:itm_cheffapp/widgets/line_item.dart';
+class LineListScreen extends ConsumerStatefulWidget {
   const LineListScreen({super.key,required this.userId});
   final int userId;
+ 
 
   @override
-  State<LineListScreen> createState() => _LineListScreenState();
+  ConsumerState<LineListScreen> createState() => _LineListScreenState();
 }
 
-class _LineListScreenState extends State<LineListScreen> {
-Future<List> fetchLines() async{
+class _LineListScreenState extends ConsumerState<LineListScreen> {
+    List lineList=[];
+   bool loading = false;
+void fetchLines(String server,String port) async{
+  setState(() {
+    loading = true;
+  });
+  Map<dynamic,int> totalLineEmployees={}; 
   List posts = [];
-    
+
       // This is an open REST API endpoint for testing purposes
-      const lineUrl = 'http://192.168.1.7:5246/api/lines';
+      final lineUrl = 'http://$server:$port/api/lines';
   
       
       final http.Response response = await http.get(Uri.parse(lineUrl));
       posts = json.decode(response.body);
-      const lineEmployeeUrl = 'http://192.168.1.7:5246/api/lineEmployee';
+      final lineEmployeeUrl = 'http://$server:$port/api/lineEmployee';
+      final e = 'http://$server:$port/api/lineMovement';
+
       final lineEmployeeResponse = await http.get(Uri.parse(lineEmployeeUrl));
+      final s = await http.get(Uri.parse(e));
+      final List templineMovementList = jsonDecode(s.body);
      List TempList =  jsonDecode(lineEmployeeResponse.body);
+      
+  
+     
+  for(int i = 0; i < templineMovementList.length;i++){
+totalLineEmployees[templineMovementList[i]['lineId']] =  ( (totalLineEmployees[templineMovementList[i]['lineId']] ?? 0) + 1) ;
+
+  }
+
+
+
+ 
+  
+
+
+
+
+
+print(totalLineEmployees);
+ref.read(lineProvider.notifier).setLineFeatures(totalLineEmployees);  
+        
+     
+     
+     
+   
+ 
+      
+
+  
+
+
+
   
       TempList = TempList.where((element) => element['employeeId'] == widget.userId).toList();
-      print(TempList);
+
+
     final  List<int> linEmployeeIdList= [];
       for(int i = 0; i< TempList.length; i++){
         linEmployeeIdList.add(TempList[i]['lineId']);
       }
 posts = posts.where((element) => linEmployeeIdList.contains(element['id'])).toList();
-return posts;
+setState(() {
+  lineList = posts;
+});
+
+
+setState(() {
+  loading = false;
+});
+
 
 }
 @override
   void initState() {
-  fetchLines();
+        WidgetsBinding.instance.addPostFrameCallback((_) { 
+            fetchLines(ref.watch(connectionProvider)['server'], ref.watch(connectionProvider)['port']);
+        });
+
     super.initState();
+ 
   }
 
 
 
   Widget build(BuildContext context) {
-    return  Scaffold(
+    return loading ? const LoadingSpin() :  Scaffold(
       body: SafeArea(child:
       Column(
         children: [
@@ -63,42 +121,22 @@ return posts;
                const Divider(height: 10,color: Colors.grey,),
                 Expanded(child:  
                
-                SingleChildScrollView(
-                 child:               FutureBuilder(
-   future: fetchLines(),
-   builder: (ctx,snapshot) {
+                
+                        
+   
 
- if(snapshot.hasError){
-  return  Padding(padding: EdgeInsets.all(10),child:const Text('Bantlar yüklenirken bir hata oluştu. İnternet bağlantınızı kontrol edin') ,);
+
  
- }
 
- if(snapshot.connectionState == ConnectionState.done){
- return ListView.builder(physics:const NeverScrollableScrollPhysics(),shrinkWrap: true,itemCount: snapshot.data!.length,itemBuilder: (context, index) => Card(
-   margin:const EdgeInsets.all(2),
-   color: Theme.of(context).colorScheme.onPrimary,
-   child:    ListTile(
- 
-   leading: Text(snapshot.data![index]['name'],style:const TextStyle(fontSize: 20),),
-   onTap: () {
-     Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => OperatorListScreen(userId: widget.userId,lineId: snapshot.data![index]['id'],lineName: snapshot.data![index]['name'],)));
-   },
-
- ),
- )) ; 
+ListView.builder(physics:const NeverScrollableScrollPhysics(),shrinkWrap: true,itemCount: lineList.length,itemBuilder: (context, index) => LineItem(f: ref.watch(lineProvider),features: lineList[index],)) 
 
 
       
-   }
+   
 
 
 
 
-  else  {
-   return const Padding(padding: EdgeInsets.all(20),child: CircularProgressIndicator(),);   }
-
-   }
-  ) )
 
 
  

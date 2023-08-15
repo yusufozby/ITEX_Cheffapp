@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:itm_cheffapp/screens/settings_screen.dart';
 import 'package:itm_cheffapp/widgets/login_form.dart';
 
 
-class Login extends StatefulWidget {
+class Login extends ConsumerStatefulWidget {
   
   const Login({super.key});
    
   @override
-  State<Login> createState() => _LoginState();
+  ConsumerState<Login> createState() => _LoginState();
 }
 
-class _LoginState extends State<Login> {
+class _LoginState extends ConsumerState<Login> {
 
   @override
   Widget build(BuildContext context) {

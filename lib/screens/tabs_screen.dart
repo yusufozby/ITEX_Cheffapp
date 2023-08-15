@@ -16,14 +16,15 @@ class _TabsScreenState extends State<TabsScreen> {
 
 
   int selectedPageIndex = 0;
-  @override
-  void selectPage(int index){
+    void selectPage(int index){
     setState(() {
       selectedPageIndex = index;
     });
 
   }
 
+
+  @override
 
 
   Widget build(BuildContext context) {
@@ -33,7 +34,7 @@ if(selectedPageIndex == 0){
  Widget activePage = LineListScreen(userId: widget.lineId,);
 }
 else {
- activePage =const WorkTimeScreen();
+ activePage = WorkTimeScreen(lineId: widget.lineId,lineName: "",);
 }
     return Scaffold(
       body: activePage,

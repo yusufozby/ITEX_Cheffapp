@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class LoadingSpin extends StatelessWidget {
-  const LoadingSpin({super.key,required this.addLoadingOperator});
-  final bool addLoadingOperator;
+  const LoadingSpin({super.key});
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: 
       SafeArea(child:Column(
       children: [
@@ -28,8 +28,8 @@ Expanded(child:
         
     
     ),
-    const SizedBox(height: 20,),
-    Visibility(child: Text('Operatörler Ekleniyor...'),visible: addLoadingOperator,)
+    SizedBox(height: 20,),
+Text('İşlem yapılıyor...')
     ],
    )
    
