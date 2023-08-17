@@ -6,13 +6,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:itm_cheffapp/models/LineMovement.dart';
 import 'package:itm_cheffapp/providers/connection_provider.dart';
+import 'package:itm_cheffapp/providers/line_provider.dart';
+import 'package:itm_cheffapp/providers/linemovement_provider.dart';
+import 'package:itm_cheffapp/providers/permission_provider.dart';
 import 'package:itm_cheffapp/screens/loading_spin.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:http/http.dart' as http;
 
 class OperatorDetail extends ConsumerStatefulWidget {
-  const OperatorDetail({super.key,required this.lineMovement});
+  const OperatorDetail({super.key,required this.lineMovement,required this.losttime});
   final LineMovement lineMovement;
+  final String losttime;
   
 
   @override 
@@ -35,18 +39,18 @@ String constantEndTime = "";
 void fetchLinesAndLostTimes(String server,String port) async{
   setState(() {
     loading = true;
-    selectedCondition = conditions[widget.lineMovement.condition];
+    selectedCondition = widget.losttime;
   });
 final response = await http.get(Uri.parse('http://$server:$port/api/lines'));
 final employeeLineResponse = await http.get(Uri.parse('http://$server:$port/api/LineMovement'));
 final List employeeList=jsonDecode(employeeLineResponse.body);
 
-var selectedItem = employeeList.firstWhere((e) => e['employeeId'] == widget.lineMovement.employeeId);
+var selectedItem = employeeList.firstWhere((e) => e['id'] == widget.lineMovement.id);
 setState(() {
   endTime = selectedItem['employeeEndTime'].toString().substring(0,5);
     startTime = selectedItem['employeeStartTime'].toString().substring(0,5);
 constantStartTime = selectedItem['employeeStartTime'].toString().substring(0,5);
-constantStartTime = selectedItem['employeeEndTime'].toString().substring(0,5);
+constantEndTime = selectedItem['employeeEndTime'].toString().substring(0,5);
 });
 
 final List<dynamic> responseList = jsonDecode(response.body);
@@ -66,14 +70,31 @@ loading = false;
 
 }
 void updateTime(String server,String port) async{
+  if((startTime == constantStartTime && selectedCondition != conditions[Condition.active]) ){
+ showDialog(context: context, builder:(context) =>  AlertDialog(
+  title: Text('Hata'),
+  content: Text('Lütfen saati değiştiriniz'),
+actions: [
+        TextButton(onPressed: (){
+                Navigator.of(context).pop();
+        }, child: Text('Ok'))
+],
+),);
+    return;
+
+  }
+  setState(() {
+    loading = true;
+  });
   final lostTimeResponse = await http.get(Uri.parse('http://$server:$port/api/lostTime'));
   final List lostTimeList = jsonDecode(lostTimeResponse.body);
-print(lostTimeList);  
-print(selectedCondition);
+
+
 var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == selectedCondition);
 
  final response = await http.put(Uri.parse('http://$server:$port/api/LineMovement')
  ,body:jsonEncode({
+  'id':widget.lineMovement.id,
    'lineId':widget.lineMovement.lineId,
    'employeeId':widget.lineMovement.employeeId,
    'startTime':selectedCondition != conditions[Condition.active] ? startTime : constantStartTime,
@@ -82,41 +103,161 @@ var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == s
  }),headers: {
   'Content-Type':'application/json'
  } )  ;
+ setState(() {
+   loading = false;
+ });
+if(response.statusCode <= 200 && response.statusCode < 400){
+
+ref.read(lineMovementProvider.notifier).updateLineMovement(widget.lineMovement.id, startTime, selectedLostTime['name']);
+if(selectedCondition == "izinli" && widget.losttime != "izinli" ){
+ref.read(permissionProvider.notifier).increasePermissionQty(widget.lineMovement.lineId);
+}
+if(selectedCondition != "izinli" && widget.losttime == "izinli" ){
+ref.read(permissionProvider.notifier).decreasePermissionQty(widget.lineMovement.lineId);
+}
+ showDialog(context: context, builder:(context) =>  AlertDialog(
+  title: Text('İşlem Başarılı'),
+  content: Text('Saat başarıyla değişitirildi.'),
+actions: [
+        TextButton(onPressed: (){
+                Navigator.of(context).pop();
+        }, child: Text('Ok'))
+],
+),);
+}
+else {
+ showDialog(context: context, builder:(context) =>  AlertDialog(
+  title: Text('Hata'),
+  content: Text('işlem yapılırken hata meydana geldi.'),
+  actions: [
+    TextButton(onPressed: (){
+      Navigator.of(context).pop();
+    }, child: Text('Tamam'))
+  ],
+),);
+}
+
+
+
+
+
 
 
 }
+
+
+void deleteLineMovement(String server,String port) async{
+  setState(() {
+    loading = true;
+  });
+final response =  await http.delete(Uri.parse("http://$server:$port/api/LineMovement/${widget.lineMovement.id}"));
+if(response.statusCode >= 200 && response.statusCode < 400){
+   ref.read(lineMovementProvider.notifier).deleteEmployee(widget.lineMovement.id);
+   ref.read(lineProvider.notifier).decreaseEmployeeQty(widget.lineMovement.lineId);
+  if(widget.losttime == 'izinli'){
+        ref.read(permissionProvider.notifier).decreasePermissionQty(widget.lineMovement.lineId);
+  }
+}
+setState(() {
+loading =   true;
+});
+ 
+   
+   Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+}
+
+  
+  void popUsingContext() {
+
+  Navigator.of(context,rootNavigator: true).pop();
+    
+  
+  }
 void updateLine(String server,String port) async{
 if(lineChange){
+setState(() {
+  loading = true;
+});
+bool checkSameLine = widget.lineMovement.lineName == lineName;
 
+if(checkSameLine){
+ showDialog(context: context, builder: (ctx)=>   
+  AlertDialog(
+    title: const Text('Hata'),
+    content:const Text('Aynı bantı seçerek değişiklik yapamazsınız. Lütfen farklı bir bant seçin.',
+    style: TextStyle(fontSize: 13,height: 1.5),),
+            actions: [
+          TextButton(onPressed: (){
+
+                Navigator.of(context).pop();
+              
+              
+              }, child: Text('tamam'.toUpperCase()))
+            ],));
+            setState(() {
+              loading = false;
+            });
+            return;
+}
 
 final lineResponse = await http.get(Uri.parse('http://$server:$port/api/lines'));
+
 List lineList = jsonDecode(lineResponse.body);
 var selectedLine = lineList.firstWhere((element) => element['name'] == lineName );
 
+final lostTimeResponse = await http.get(Uri.parse('http://$server:$port/api/LostTime'));
+final List lostTimeList = jsonDecode(lostTimeResponse.body);
+var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == 'Aktif'); 
+print(widget.lineMovement.id);
 final response = await http.put(Uri.parse('http://$server:$port/api/LineMovement')
 
  ,body:jsonEncode({
+  'id':widget.lineMovement.id,
    'lineId':selectedLine['id'],
    'employeeId':widget.lineMovement.employeeId,
    'startTime': endTime,
    'endTime':constantEndTime,
-   'lostTimeId':2
+   'lostTimeId':selectedLostTime['id']
  }),headers: {
   'Content-Type':'application/json'
  } )  ;
+if(response.statusCode >= 200 && response.statusCode < 400){
+ref.read(lineProvider.notifier).increaseEmployeeQty(selectedLine['id']);
+ref.read(lineProvider.notifier).decreaseEmployeeQty(widget.lineMovement.lineId);
+ref.read(lineMovementProvider.notifier).deleteEmployee(widget.lineMovement.id);
 }
-else {
-  showDialog(useRootNavigator: false,context: context, builder: (ctx)=>    AlertDialog(content:const Text('Bant değişikliğini onaylamadınız. İşleme devam etmek istediğinizden emin misiniz ?',style: TextStyle(fontSize: 13,height: 1.5),),
+
+setState(() {
+  loading = false;
+});
+
+ showDialog(useRootNavigator: true,context: context, builder: (ctx)=>    AlertDialog(title: Text('Bant Değişitirildi'),content: Text("Operatörün yeni atandığı bant : $lineName",style: TextStyle(fontSize: 13,height: 1.5),),
             actions: [
+       
               TextButton(onPressed: (){
-                Navigator.of(context).pop();
-              }, child: Text('Hayır'.toUpperCase())),
+
+           popUsingContext();
+           Navigator.of(context).pop();
+              
+              
+              }, child: Text('tamam'.toUpperCase()))
+            ],));
+}
+
+else {
+  setState(() {
+    loading = false;
+  });
+  showDialog(useRootNavigator: false,context: context, builder: (ctx)=>    AlertDialog(title: const Text('Hata'),content:const Text('Bant değişikliğini onaylamadınız. Lütfen bant değişikliğini onaylayın.',style: TextStyle(fontSize: 13,height: 1.5),),
+            actions: [
+       
               TextButton(onPressed: (){
 
                 Navigator.of(context).pop();
-                Navigator.of(context).pop();
               
-              }, child: Text('Evet'.toUpperCase()))
+              
+              }, child: Text('tamam'.toUpperCase()))
             ],));
 }
 }
@@ -160,12 +301,12 @@ controller: operatorController,
       ),
  
           Row(children: <Widget>[
-            Expanded(child:          DropdownButtonFormField<String>(value: conditions[widget.lineMovement.condition],items: conditions.entries.map((e) =>
+            Expanded(child:          DropdownButtonFormField<String>(value:widget.losttime,items: conditions.entries.map((e) =>
              DropdownMenuItem<String>(
              value: e.value,
              child: Text(e.value))).toList(), 
              onChanged: (v){
-setState(() {
+setState(() { 
   selectedCondition = v;
 });
  }
@@ -237,9 +378,10 @@ setState(() {
              const Text('Bitiş Saati'),
               const SizedBox(height: 10,),
     Container(
+
       decoration: BoxDecoration(
         color:  Theme.of(context).colorScheme.background,
-        borderRadius: BorderRadius.all(Radius.circular(5)),
+        borderRadius:const BorderRadius.all(Radius.circular(5)),
         border: Border.all(color: Colors.grey[300]!)
         
 
@@ -297,7 +439,7 @@ setState(() {
             children: [
             const  Text('Aktif Bant'),
               const SizedBox(height: 10,),
-                     DropdownButtonFormField<String>(value:lineName,items: items.map((e) => DropdownMenuItem<String>(value: e,child: Text(e))).toList(), onChanged: null
+                     DropdownButtonFormField<String>(value:widget.lineMovement.lineName,items: items.map((e) => DropdownMenuItem<String>(value: e,child: Text(e))).toList(), onChanged: null
         
        
  
@@ -359,16 +501,38 @@ Row(
           onPressed: (){Navigator.pop(context);}, 
         child:const Text('İptal'))
         ,
+  
+                 ElevatedButton(
+          onPressed: (){
+            showDialog(context: context, builder :(c)=>AlertDialog(
+              title:const Text('Silme işlemi'),
+              content:const Text("Operatörü silerseniz operatör herhangi bir banta sahip olmayacaktır. Operatörü silmek istediğinizden emin misiniz ?"),
+              actions: [
+                      TextButton(onPressed: (){
+                  Navigator.of(context).pop();
+                }, child:const Text('Hayır')),
+                TextButton(onPressed:(){
+                  deleteLineMovement(ref.watch(connectionProvider)['server'], ref.watch(connectionProvider)['port']);
+                }, child:const Text('Evet')),
+            
+              ],
+            ));
         
+            
+          }, 
+          child:const  Text('Sil')),
         
-        
+          const SizedBox(width: 5,),
          ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green
+          ),
           onPressed: (){
             updateLine(ref.watch(connectionProvider)['server'], ref.watch(connectionProvider)['port']);
         
             
           }, 
-          child:const  Text('Tamam'))],
+          child:const  Text('Onayla'))],
       ),
 
     

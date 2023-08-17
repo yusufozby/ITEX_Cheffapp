@@ -9,19 +9,30 @@ import 'package:itm_cheffapp/screens/work_time_screen.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
 class LineItem extends ConsumerStatefulWidget {
-  const LineItem({super.key,required this.features,required this.f});
+const  LineItem({super.key,required this.features,required this.f,required this.totalOffEmployees});
   final Map<String,dynamic> features;
   final Map<dynamic,int> f;
+ final String totalOffEmployees;
 
   @override
   ConsumerState<LineItem> createState() => _LineItemState();
 }
 
 class _LineItemState extends ConsumerState<LineItem> {
+ 
+ 
+ String total="0";
   @override
-
-  Widget build(BuildContext context) {
   
+void initState() {
+  
+
+
+    super.initState();
+  
+  }
+  Widget build(BuildContext context) {
+
    
 final double width  = MediaQuery.of(context).size.width ;
 final bool isMobile = width >= 768;
@@ -96,7 +107,7 @@ final bool isMobile = width >= 768;
         const  SizedBox(height: 20,),
            Text(ref.watch(lineProvider)[widget.features['id']] != null ? ref.watch(lineProvider)[widget.features['id']].toString() :  "0",style: TextStyle(fontWeight: FontWeight.bold,color: Theme.of(context).colorScheme.primary,overflow: TextOverflow.ellipsis,)),
         const  SizedBox(height: 20,),
-           Text('ewq',style: TextStyle(fontWeight: FontWeight.bold,color: Theme.of(context).colorScheme.primary),overflow: TextOverflow.ellipsis),
+           Text(widget.totalOffEmployees,style: TextStyle(fontWeight: FontWeight.bold,color: Theme.of(context).colorScheme.primary),overflow: TextOverflow.ellipsis),
         const  SizedBox(height: 20,),
         
        ],  

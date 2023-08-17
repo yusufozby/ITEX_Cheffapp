@@ -51,12 +51,12 @@ class _LoginState extends ConsumerState<Login> {
             
             padding:const EdgeInsets.fromLTRB(25, 0, 25, 0),
            width: double.infinity,
-            child:const LoginForm()
+            child: LoginForm()
 
           ),
        )
     , )   ,
-  Visibility(child: Text('dsa'),visible: !keyboardIsOpen,)
+  Visibility(child: Image(image: AssetImage('assets/itmbottom-logo.png')),visible: !keyboardIsOpen,)
         
         
           

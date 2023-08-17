@@ -6,7 +6,7 @@ class LineMovement {
   final String startTime;
   final Condition condition;
   final String dateTime;
- String? lineName;
+ final String lineName;
 final int lineId;
 final employeeId;
 
@@ -16,7 +16,7 @@ final employeeId;
     required this.nameSurname,
     required this.startTime,
     required this.dateTime,
-  
+  required this.lineName,
     required this.lineId,
     required this.employeeId
   });
@@ -32,5 +32,5 @@ enum Condition {
 const conditions = {
   Condition.active:'Aktif',
   Condition.arrivedLate:'Geç geldi',
-  Condition.isOff:'İzinli'
+  Condition.isOff:'izinli'
 };

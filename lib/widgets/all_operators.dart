@@ -106,12 +106,9 @@ List t =jsonDecode(lineMovementResponse.body);
 
 
 
-  bool checkMultiple =t.every((element) => element['employeeId'] != lineEmployeeIdList[i]);
-  print(checkMultiple);
-  print(lineEmployeeIdList[i]);
-  if(checkMultiple){
+
 ref.read(lineProvider.notifier).increaseEmployeeQty(widget.lineId);
-  }
+  
 
 
 

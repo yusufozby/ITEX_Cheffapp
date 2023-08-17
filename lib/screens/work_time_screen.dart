@@ -26,6 +26,7 @@ class _WorkTimeScreenState extends ConsumerState<WorkTimeScreen> {
 List<Employee> employees = [];
 bool loading = false;
 
+Condition selectedCondition = Condition.active;
 int checkOperator=0;
 void fetchLineOperators(String server,String port) async{
 setState(() {
@@ -78,31 +79,18 @@ for(int i = 0; i <lineMovementList.length;i++){
   var  getOriginalDate =  DateFormat("yyyy-MM-dd").parse(lineMovementList[i]['date']);
   var getMonth = getOriginalDate.month < 10 ? "0${getOriginalDate.month}" : getOriginalDate.month ;
     var getDay = getOriginalDate.day < 10 ? "0${getOriginalDate.day}" : getOriginalDate.day ;
-   var getSimplifiedDate =  "$getDay/$getMonth/${getOriginalDate.year}";
-   Condition? selectedCondition;
-   for(var condition in conditions.entries){
-       if(condition.value == lineMovementList[i]['losttime']){
-            selectedCondition = condition.key;              
-       }
-}
+  
 
+ 
 
 lineMovementList = lineMovementList.where((element) => element['lineId'] ==widget.lineId).toList();
   setState(() {
     checkOperator = lineMovementList.length;
   });
+
 ref.read(lineMovementProvider.notifier).addElementProviderList(lineMovementList);
 
-  // ref.read(lineMovementProvider.notifier).addElementProviderList(
-  //   LineMovement(
-  //     employeeId: lineMovementList[i]['employeeId'],
-  //     id: lineMovementList[i]['id'],
-  //   lineName: lineMovementList[i]['line']['name'],
-  //   lineId: lineMovementList[i]['line']['id'],
-  //   condition: selectedCondition!, 
-  //   nameSurname: lineMovementList[i]['namesurname'], 
-  //   startTime: lineMovementList[i]['employeeStartTime'].toString().substring(0,5), 
-  //   dateTime: getSimplifiedDate));
+ 
 }
 }
 
@@ -120,13 +108,14 @@ fetchLineOperators(ref.watch(connectionProvider)['server'], ref.watch(connection
 
 
   Widget build(BuildContext context) {
- 
+ bool keyboardIsOpen = MediaQuery.of(context).viewInsets.bottom !=0 ;
     return loading ? const LoadingSpin()  : Scaffold(
+      appBar: AppBar(),
       floatingActionButton: FloatingActionButton(onPressed: (){
         showModalBottomSheet(isScrollControlled: true,enableDrag: false,isDismissible: false,context: context, builder:(ctx) {
           return  FractionallySizedBox(
    heightFactor: 1,
-   child:  AllOperators(lineName: '', employees: employees, lineId: widget.lineId, showNewList: (List<Employee> e){ }),
+   child:  AllOperators(lineName: widget.lineName, employees: employees, lineId: widget.lineId, showNewList: (List<Employee> e){ }),
  );
         }
 
@@ -159,7 +148,7 @@ mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 child: 
               Column(
                 children: [
-                  Text('Tarih'),
+                 const Text('Tarih'),
  Text(DateTime.now().toString().substring(0,10).replaceAll("-", "."),textAlign: TextAlign.center,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),),
                 ],
               )
@@ -228,7 +217,8 @@ mainAxisAlignment: MainAxisAlignment.spaceBetween,
                    {
  return  FractionallySizedBox(
    heightFactor: 1,
-   child:  OperatorDetail(lineMovement: LineMovement(id: ref.watch(lineMovementProvider)[index]['id'], condition: Condition.active, nameSurname: ref.watch(lineMovementProvider)[index]['namesurname'], startTime: '', dateTime: ref.watch(lineMovementProvider)[index]['employeeStartTime'], lineId: widget.lineId, employeeId:ref.watch(lineMovementProvider)[index]['employeeId'])),
+   child:  OperatorDetail(losttime: ref.watch(lineMovementProvider)[index]['losttime'],lineMovement: LineMovement(lineName: widget.lineName,id: ref.watch(lineMovementProvider)[index]['id'], condition: selectedCondition!, nameSurname: ref.watch(lineMovementProvider)[index]['namesurname'], startTime: '', dateTime: ref.watch(lineMovementProvider)[index]['employeeStartTime'], 
+   lineId: widget.lineId, employeeId:ref.watch(lineMovementProvider)[index]['employeeId'])),
  );
                    }
                   );
@@ -243,7 +233,7 @@ mainAxisAlignment: MainAxisAlignment.spaceBetween,
                    border: Border(left: BorderSide(color: Colors.grey)
                    ,bottom: BorderSide(color: Colors.grey) )
                  ),
-                 child:  Text(ref.watch(lineMovementProvider)[index]['namesurname'],overflow: TextOverflow.ellipsis,maxLines: 2,style: TextStyle(fontSize: 11),textAlign: TextAlign.center,),) ,
+                 child:  Text(ref.watch(lineMovementProvider)[index]['namesurname'],overflow: TextOverflow.ellipsis,maxLines: 2,style:const TextStyle(fontSize: 11),textAlign: TextAlign.center,),) ,
                 ),
                
                     Expanded(child:
@@ -254,7 +244,7 @@ mainAxisAlignment: MainAxisAlignment.spaceBetween,
                    border: Border(left: BorderSide(color: Colors.grey)
                    ,bottom: BorderSide(color: Colors.grey) )
                  ),
-                 child:  Text(ref.watch(lineMovementProvider)[index]['employeeStartTime'].toString().substring(0,5),overflow: TextOverflow.ellipsis,maxLines: 2,style: TextStyle(fontSize: 11),textAlign: TextAlign.center,),) ,
+                 child:  Text(ref.watch(lineMovementProvider)[index]['employeeStartTime'].toString().substring(0,5),overflow: TextOverflow.ellipsis,maxLines: 2,style:const TextStyle(fontSize: 11),textAlign: TextAlign.center,),) ,
                 ),
                                  
                                        Expanded(child:
@@ -268,7 +258,7 @@ mainAxisAlignment: MainAxisAlignment.spaceBetween,
                    right:        BorderSide(color: Colors.grey)   
                     )
                  ),
-                 child:  Text(ref.watch(lineMovementProvider)[index]['losttime'],overflow: TextOverflow.ellipsis,maxLines: 2,style: TextStyle(fontSize: 11),textAlign: TextAlign.center,),) ,
+                 child:  Text(ref.watch(lineMovementProvider)[index]['losttime'],overflow: TextOverflow.ellipsis,maxLines: 2,style: const TextStyle(fontSize: 11),textAlign: TextAlign.center,),) ,
                 ),
                ],
              ),
@@ -288,13 +278,13 @@ mainAxisAlignment: MainAxisAlignment.spaceBetween,
             )
             
             ),
-          const  Padding(padding:const EdgeInsets.only(top:65),child: 
+            Padding(padding: EdgeInsets.only(top:65),child: 
               
                
-               Center(child: Text('ewq',style: TextStyle(backgroundColor: Colors.red),),) 
+               Center(child:   Visibility(child: Image(image: AssetImage('assets/itmbottom-logo.png')),visible: !keyboardIsOpen,),) 
               
-             ,)
-       
+             ,),
+      
         ],
       )
       ),

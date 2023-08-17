@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:itm_cheffapp/providers/connection_provider.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:itm_cheffapp/providers/linemovement_provider.dart';
 import 'package:itm_cheffapp/screens/linelist_screen.dart';
-import 'package:itm_cheffapp/screens/tabs_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class LoginForm extends ConsumerStatefulWidget {
  
   const LoginForm({super.key});
@@ -16,12 +18,12 @@ class LoginForm extends ConsumerStatefulWidget {
 }
 
 class _LoginFormState extends ConsumerState<LoginForm> {
-  final usernameController = TextEditingController();
-    final passwordController = TextEditingController();
+ late final usernameController = TextEditingController(text: ref.read(connectionProvider)['username'].toString());
+  late  final passwordController = TextEditingController(text: ref.read(connectionProvider)['password'].toString());
 bool isError = false;
 
 String message = "";
-
+@override
   void dispose() {
 
     super.dispose();
@@ -40,29 +42,29 @@ var url = 'http://$server:$port/api/Auth';
  ,body: jsonEncode( {
   'Username':usernameController.text.toString(),
  'Password':passwordController.text.toString(),
- 'Job':'Sef'}
- ))
-;
+ }
+ ));
 
 
- if(response.statusCode >= 400){  
-          setState(() {
+
+var responseBody = jsonDecode(response.body);
+ if(response.statusCode >= 400 || responseBody['jobId'] != 2){  
+          setState(() 
+          {
          isError = true;
-         message = "Hatalı kullanıcı adı veya şifre.";
+         message = "Hatalı kullanıcı adı veya şifre.";  
           });
           return;
 }
- else {
-
+else {
 int lineId =  jsonDecode(response.body)['id'];
-print(lineId);
-
-   Navigator.of(context).push(MaterialPageRoute(builder: (ctx) =>LineListScreen(userId: lineId)));
+Navigator.of(context).push(MaterialPageRoute(builder: (ctx) =>LineListScreen(userId: lineId)));
     setState(() {
    isError = false;
 
   });
-
+ref.read(connectionProvider.notifier).setPassword(passwordController.text.toString());
+ref.read(connectionProvider.notifier).setUsername(usernameController.text.toString());
 }
 }
 catch(e) {
@@ -76,7 +78,19 @@ catch(e) {
 
 
  }
+ void getUserCredentials() async{
+    final prefs = await SharedPreferences.getInstance();
+    usernameController.text = prefs.getString('username')!;
+      passwordController.text = prefs.getString('password')!;
+}
 
+@override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getUserCredentials();
+    
+  }
 
 
   Widget build(BuildContext context) {

@@ -9,10 +9,21 @@ LineMovementProvider() : super([]);
 
 void addElementProviderList (List lineMovement){
 state = lineMovement;
+}
+void deleteEmployee(int id){
+  state = state.where((element) => element['id'] != id).toList();
+}
+void updateLineMovement(int Id,String startTime,String losttime){
+  state = state.map((linemovement) {
+    if(Id == linemovement['id']){
+                linemovement['employeeStartTime'] =  startTime;
+                linemovement['losttime'] = losttime;
 
-
-
-
+    }
+    return linemovement;
+  } 
+  
+    ).toList();
 
 }
 

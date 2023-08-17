@@ -23,7 +23,15 @@ state = {...state,id:state[id]!+1};
 
 void decreaseEmployeeQty(int id){
 
+if(state[id] == null){
 
+ return;
+}
+
+else {
+
+state = {...state,id:state[id]!-1};
+}
 
 
 
