@@ -1,8 +1,9 @@
 import 'dart:convert';
 
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:itm_cheffapp/providers/connection_provider.dart';
 import 'package:itm_cheffapp/providers/line_provider.dart';
@@ -37,10 +38,35 @@ void fetchLines(String server,String port) async{
       
       final http.Response response = await http.get(Uri.parse(lineUrl));
       posts = json.decode(response.body);
-      final lineEmployeeUrl = 'http://$server:$port/api/lineEmployee';
-      final e = 'http://$server:$port/api/lineMovement';
-      final losttimeUrl = 'http://$server:$port/api/lostTime';
+for(int i = 0; i < posts.length;i++){
+  final EfficientResponse = await http.get(Uri.parse("http://$server:$port/api/Daily_LineMovements/LineProductivity?lineId=${posts[i]['id']}"));
+ String efficient ="" ;
+ 
+if(jsonDecode(EfficientResponse.body).runtimeType == int){
+   efficient = double.parse(jsonDecode(EfficientResponse.body).toString()).toString();
+}
+else {
 
+   efficient = jsonDecode(EfficientResponse.body).toString();
+}
+   posts = posts.map((e) {
+if(e['id'] == posts[i]['id']){
+
+   posts[i]['efficient'] = efficient;
+}
+
+
+    return e;
+   }).toList();
+
+}
+print(posts);
+
+
+      final lineEmployeeUrl = 'http://$server:$port/api/line_Employees';
+      final e = 'http://$server:$port/api/daily_lineMovements';
+      final losttimeUrl = 'http://$server:$port/api/lostTimes';
+      
       final lostTimeResponse = await http.get(Uri.parse(losttimeUrl));
       final List lostTimeList = jsonDecode(lostTimeResponse.body);
       
@@ -50,7 +76,7 @@ void fetchLines(String server,String port) async{
      List templineMovementList = jsonDecode(s.body);
      List TempList =  jsonDecode(lineEmployeeResponse.body);
     
-        var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == 'izinli');
+        var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == 'Tam Gün izinli');
         setState(() {
           lostTimeId = selectedLostTime['id'];
         });
@@ -60,12 +86,16 @@ void fetchLines(String server,String port) async{
   for(int i = 0; i < templineMovementList.length;i++){
 totalLineEmployees[templineMovementList[i]['lineId']] =  ( (totalLineEmployees[templineMovementList[i]['lineId']] ?? 0) + 1) ;
 
+
+
+
   }
 
 ref.read(lineProvider.notifier).setLineFeatures(totalLineEmployees);  
 TempList = TempList.where((element) => element['employeeId'] == widget.userId).toList();
 final  List<int> linEmployeeIdList= [];
 for(int i = 0; i< TempList.length; i++){
+         
         linEmployeeIdList.add(TempList[i]['lineId']);
       }
 posts = posts.where((element) => linEmployeeIdList.contains(element['id'])).toList();
@@ -126,7 +156,7 @@ setState(() {
             children: [
                 const  SizedBox(height: 40,),
                Center(
-                  child: Text('Bant Listesi',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25,color: Theme.of(context).colorScheme.secondary),),
+                  child: Text(AppLocalizations.of(context)!.linelist,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
                 
                  ),
                  const Divider(height: 10,color: Colors.grey,),

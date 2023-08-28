@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:itm_cheffapp/screens/settings_screen.dart';
 import 'package:itm_cheffapp/widgets/login_form.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Login extends ConsumerStatefulWidget {
   
@@ -19,7 +19,7 @@ class _LoginState extends ConsumerState<Login> {
     bool keyboardIsOpen = MediaQuery.of(context).viewInsets.bottom != 0;
     return Scaffold(
      
-      appBar: AppBar(  title:Text('ITEX Operation Control '),actions: [
+      appBar: AppBar(  title:Text(AppLocalizations.of(context)!.loginTitle),actions: [
         PopupMenuButton(
        
         itemBuilder: (ctx)  {

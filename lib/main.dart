@@ -81,16 +81,15 @@ class _AppState extends ConsumerState<App> {
       ],
       theme: ThemeData().copyWith(
       colorScheme: ColorScheme.fromSeed(
-      seedColor:const Color.fromRGBO(255,40,96, 1),
-      primary:const Color.fromRGBO(255,90,96, 1),
+ seedColor:const Color.fromRGBO(44,123,229, 1),
     ),
 tabBarTheme:const TabBarTheme(
 
 ),
-     appBarTheme:const AppBarTheme(
-          backgroundColor: Color.fromRGBO(0, 0, 139, 1),
+    appBarTheme:const AppBarTheme(
+          backgroundColor: const Color.fromRGBO(44,123,229, 1),
           systemOverlayStyle: SystemUiOverlayStyle(
-statusBarColor: Color.fromRGBO(0, 0, 110, 1)
+statusBarColor: const Color.fromRGBO(44,123,179, 1)
 
 
           ),

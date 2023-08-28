@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:itm_cheffapp/providers/line_provider.dart';
-import 'package:itm_cheffapp/providers/linemovement_provider.dart';
+
 import 'package:itm_cheffapp/screens/work_time_screen.dart';
 
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:percent_indicator/percent_indicator.dart';
 
@@ -22,6 +22,7 @@ class _LineItemState extends ConsumerState<LineItem> {
  
  
  String total="0";
+
   @override
   
 void initState() {
@@ -59,15 +60,15 @@ final bool isMobile = width >= 768;
        
            children: [
       
-         const    Text('VERİMLİLİK',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20),),
+            Text(AppLocalizations.of(context)!.productivity,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20),),
         const SizedBox(height: 10,),
          
           
        CircularPercentIndicator(
       radius:isMobile ? 125 : 80,
        lineWidth: 15,
-        percent: 0.5 ,
-        center: Text( "66%" ,style:const TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        percent:  double.parse(widget.features['efficient']) ,
+        center: Text( "${double.parse(widget.features['efficient']).toStringAsFixed(0)}%" ,style:const TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
        backgroundColor: Theme.of(context).colorScheme.onBackground.withOpacity(0.1),
        progressColor:Theme.of(context).colorScheme.inversePrimary,
        
@@ -83,16 +84,16 @@ final bool isMobile = width >= 768;
         
          ,
       
-      const  Expanded(child: Column(
+     Expanded(child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
        children:  [
         
-           Text('Bant :',overflow: TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.bold),),
+           Text(AppLocalizations.of(context)!.lineName,overflow: TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.bold),),
           SizedBox(height: 20,),
          
-           Text('Çalışan Sayısı',overflow: TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.bold),),
+           Text(AppLocalizations.of(context)!.employeQty,overflow: TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.bold),),
           SizedBox(height: 20,),
-           Text('İzinli Sayısı:',overflow: TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.bold)),
+           Text(AppLocalizations.of(context)!.offQty,overflow: TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.bold)),
           SizedBox(height: 20,),
          
        ],  

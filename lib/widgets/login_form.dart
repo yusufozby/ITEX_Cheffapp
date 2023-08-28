@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:itm_cheffapp/providers/connection_provider.dart';
 
 import 'package:http/http.dart' as http;
-import 'package:itm_cheffapp/providers/linemovement_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'package:itm_cheffapp/screens/linelist_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,6 +22,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
  late final usernameController = TextEditingController(text: ref.read(connectionProvider)['username'].toString());
   late  final passwordController = TextEditingController(text: ref.read(connectionProvider)['password'].toString());
 bool isError = false;
+bool isPressed = false;
 
 String message = "";
 @override
@@ -34,7 +36,10 @@ String message = "";
 
   Future<void> login(String server,String port) async{
 try {
-var url = 'http://$server:$port/api/Auth';
+  setState(() {
+    isPressed = true;
+  });
+var url = 'http://$server:$port/api/Employees/login';
 
  final response = await http.post(Uri.parse(url)
 
@@ -45,13 +50,16 @@ var url = 'http://$server:$port/api/Auth';
  }
  ));
 
-
+setState(() {
+  isPressed = false;
+});
 
 var responseBody = jsonDecode(response.body);
  if(response.statusCode >= 400 || responseBody['jobId'] != 2){  
           setState(() 
           {
          isError = true;
+         isPressed = false;
          message = "Hatalı kullanıcı adı veya şifre.";  
           });
           return;
@@ -70,8 +78,9 @@ ref.read(connectionProvider.notifier).setUsername(usernameController.text.toStri
 catch(e) {
      setState(() {
     
-       message = "Geçersiz server ip veya port.";
+       message = "Hatalı Kullanıcı Adı veya şifre";
        isError = true;
+       isPressed = false;
      });
     
 }
@@ -116,25 +125,21 @@ var constraitsWidth = MediaQuery.of(context).size.width;
       
     controller: usernameController,
     textInputAction: TextInputAction.next,
-       decoration:const InputDecoration(
-
-       hintText: "Username",
-       enabledBorder:UnderlineInputBorder(
-       borderSide: BorderSide( color:Colors.grey),
-       ),
+       decoration: InputDecoration(
+prefixIcon: Icon(Icons.person),
+       labelText: AppLocalizations.of(context)!.username,
+     border: OutlineInputBorder()
      ),),
    const    SizedBox(height: 30,),
        TextField(
         controller: passwordController,
         
         obscureText:true,
-        decoration:const InputDecoration(
-       
-        hintText: "Password",
+        decoration:InputDecoration(
+       prefixIcon:Icon(Icons.lock) ,
+        labelText: AppLocalizations.of(context)!.password,
          
-        enabledBorder:UnderlineInputBorder(
-         borderSide: BorderSide( color:Colors.grey),
-      ),
+   border: OutlineInputBorder()
       
      
     
@@ -147,18 +152,18 @@ Visibility(visible: isError,child:
   Center(child: Text(message,style:const TextStyle(color: Colors.red,fontSize: 20),),),),
      const  SizedBox(height: 20,),
 
-      ElevatedButton(onPressed: (){
+      ElevatedButton(onPressed: isPressed ? null : (){
         login(ref.watch(connectionProvider)['server'], ref.watch(connectionProvider)['port']);
       }
        ,
        style: ElevatedButton.styleFrom(padding:constraitsWidth >= 750 ? const EdgeInsets.all(20): const EdgeInsets.all(10) ,foregroundColor: Theme.of(context).colorScheme.background,
-       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-       minimumSize:const Size.fromHeight(35),backgroundColor: Colors.grey),
-       child: Text('Giriş',
+       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+       minimumSize:const Size.fromHeight(35),backgroundColor:Color.fromRGBO(110, 79, 255, 1)),
+       child: !isPressed ? Text(AppLocalizations.of(context)!.loginBtn,
        style: 
-       TextStyle(fontSize: constraitsWidth >= 750 ? 55 : 35,
+       TextStyle(fontSize: constraitsWidth >= 750 ? 40 : 35,
        fontWeight: FontWeight.w800,
-       letterSpacing: 2,)),
+       letterSpacing: 2,)) : Center(child: Container(width: 45,height: 45,child: CircularProgressIndicator(),),),
        )
 ,
     

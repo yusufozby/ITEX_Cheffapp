@@ -12,7 +12,7 @@ import 'package:itm_cheffapp/providers/permission_provider.dart';
 import 'package:itm_cheffapp/screens/loading_spin.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class OperatorDetail extends ConsumerStatefulWidget {
   const OperatorDetail({super.key,required this.lineMovement,required this.losttime});
   final LineMovement lineMovement;
@@ -36,14 +36,17 @@ String lineName="";
 String constantStartTime = "";
 String constantEndTime = "";
 
+bool isUndefined=false;
 void fetchLinesAndLostTimes(String server,String port) async{
   setState(() {
     loading = true;
     selectedCondition = widget.losttime;
   });
 final response = await http.get(Uri.parse('http://$server:$port/api/lines'));
-final employeeLineResponse = await http.get(Uri.parse('http://$server:$port/api/LineMovement'));
+
+final employeeLineResponse = await http.get(Uri.parse('http://$server:$port/api/Daily_LineMovements'));
 final List employeeList=jsonDecode(employeeLineResponse.body);
+
 
 var selectedItem = employeeList.firstWhere((e) => e['id'] == widget.lineMovement.id);
 setState(() {
@@ -70,36 +73,24 @@ loading = false;
 
 }
 void updateTime(String server,String port) async{
-  if((startTime == constantStartTime && selectedCondition != conditions[Condition.active]) ){
- showDialog(context: context, builder:(context) =>  AlertDialog(
-  title: Text('Hata'),
-  content: Text('Lütfen saati değiştiriniz'),
-actions: [
-        TextButton(onPressed: (){
-                Navigator.of(context).pop();
-        }, child: Text('Ok'))
-],
-),);
-    return;
 
-  }
   setState(() {
     loading = true;
   });
-  final lostTimeResponse = await http.get(Uri.parse('http://$server:$port/api/lostTime'));
+  final lostTimeResponse = await http.get(Uri.parse('http://$server:$port/api/lostTimes'));
   final List lostTimeList = jsonDecode(lostTimeResponse.body);
-
+print(lostTimeResponse.statusCode);
 
 var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == selectedCondition);
-
- final response = await http.put(Uri.parse('http://$server:$port/api/LineMovement')
+  print(widget.lineMovement.id);
+ final response = await http.put(Uri.parse('http://$server:$port/api/Daily_LineMovements/${widget.lineMovement.id}')
  ,body:jsonEncode({
-  'id':widget.lineMovement.id,
-   'lineId':widget.lineMovement.lineId,
-   'employeeId':widget.lineMovement.employeeId,
-   'startTime':selectedCondition != conditions[Condition.active] ? startTime : constantStartTime,
-   'endTime':endTime,
-   'lostTimeId':selectedLostTime['id']
+  
+   'LineId':widget.lineMovement.lineId,
+   'EmployeeId':widget.lineMovement.employeeId,
+   'EmployeeStartTime':selectedCondition == conditions[Condition.undefined] ? '00:00' : startTime,
+   'EmployeeEndTime':selectedCondition == conditions[Condition.undefined] ? '00:00' : endTime,
+   'LostTimeId':selectedLostTime['id']
  }),headers: {
   'Content-Type':'application/json'
  } )  ;
@@ -108,11 +99,11 @@ var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == s
  });
 if(response.statusCode <= 200 && response.statusCode < 400){
 
-ref.read(lineMovementProvider.notifier).updateLineMovement(widget.lineMovement.id, startTime, selectedLostTime['name']);
-if(selectedCondition == "izinli" && widget.losttime != "izinli" ){
+ref.read(lineMovementProvider.notifier).updateLineMovement(widget.lineMovement.id, selectedCondition == conditions[Condition.undefined] ? '00:00' : startTime, selectedLostTime['name']);
+if(selectedCondition == "Tam Gün izinli" && widget.losttime != "Tam Gün izinli" ){
 ref.read(permissionProvider.notifier).increasePermissionQty(widget.lineMovement.lineId);
 }
-if(selectedCondition != "izinli" && widget.losttime == "izinli" ){
+if(selectedCondition != "Tam Gün izinli" && widget.losttime == "Tam Gün izinli" ){
 ref.read(permissionProvider.notifier).decreasePermissionQty(widget.lineMovement.lineId);
 }
  showDialog(context: context, builder:(context) =>  AlertDialog(
@@ -125,7 +116,9 @@ actions: [
 ],
 ),);
 }
+
 else {
+print(response.statusCode);
  showDialog(context: context, builder:(context) =>  AlertDialog(
   title: Text('Hata'),
   content: Text('işlem yapılırken hata meydana geldi.'),
@@ -154,7 +147,7 @@ final response =  await http.delete(Uri.parse("http://$server:$port/api/LineMove
 if(response.statusCode >= 200 && response.statusCode < 400){
    ref.read(lineMovementProvider.notifier).deleteEmployee(widget.lineMovement.id);
    ref.read(lineProvider.notifier).decreaseEmployeeQty(widget.lineMovement.lineId);
-  if(widget.losttime == 'izinli'){
+  if(widget.losttime == 'Tam Gün izinli'){
         ref.read(permissionProvider.notifier).decreasePermissionQty(widget.lineMovement.lineId);
   }
 }
@@ -206,31 +199,54 @@ final lineResponse = await http.get(Uri.parse('http://$server:$port/api/lines'))
 List lineList = jsonDecode(lineResponse.body);
 var selectedLine = lineList.firstWhere((element) => element['name'] == lineName );
 
-final lostTimeResponse = await http.get(Uri.parse('http://$server:$port/api/LostTime'));
+final lostTimeResponse = await http.get(Uri.parse('http://$server:$port/api/LostTimes'));
 final List lostTimeList = jsonDecode(lostTimeResponse.body);
-var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == 'Aktif'); 
-print(widget.lineMovement.id);
-final response = await http.put(Uri.parse('http://$server:$port/api/LineMovement')
+var selectedLostTime = lostTimeList.firstWhere((element) => element['name'] == 'Bant Değişikliği'); 
+
+
+
+
+final response = await http.put(Uri.parse('http://$server:$port/api/Daily_LineMovements/${widget.lineMovement.id}')
 
  ,body:jsonEncode({
-  'id':widget.lineMovement.id,
-   'lineId':selectedLine['id'],
+
+   'lineId':widget.lineMovement.lineId,
    'employeeId':widget.lineMovement.employeeId,
-   'startTime': endTime,
-   'endTime':constantEndTime,
+   'EmployeestartTime': constantStartTime,
+   'EmployeeendTime':constantEndTime,
    'lostTimeId':selectedLostTime['id']
  }),headers: {
   'Content-Type':'application/json'
  } )  ;
 if(response.statusCode >= 200 && response.statusCode < 400){
 ref.read(lineProvider.notifier).increaseEmployeeQty(selectedLine['id']);
-ref.read(lineProvider.notifier).decreaseEmployeeQty(widget.lineMovement.lineId);
-ref.read(lineMovementProvider.notifier).deleteEmployee(widget.lineMovement.id);
+
+ref.read(lineMovementProvider.notifier).updateLineMovement(widget.lineMovement.id,startTime,selectedLostTime['name']);
 }
+
+final response2 = await http.post(Uri.parse('http://$server:$port/api/Daily_LineMovements'),body: jsonEncode({
+  'lineId':selectedLine['id'],
+  'employeeId':widget.lineMovement.employeeId,
+  'startTime':endTime,
+  'endTime':'18:30'
+  
+}),headers: {
+  'Content-Type':'application/json'
+});
+print(response.statusCode);
+print(response2.statusCode);
+
+
 
 setState(() {
   loading = false;
 });
+
+
+
+
+
+
 
  showDialog(useRootNavigator: true,context: context, builder: (ctx)=>    AlertDialog(title: Text('Bant Değişitirildi'),content: Text("Operatörün yeni atandığı bant : $lineName",style: TextStyle(fontSize: 13,height: 1.5),),
             actions: [
@@ -280,7 +296,7 @@ void initState() {
  late final operatorController = TextEditingController(text: widget.lineMovement.nameSurname);
   @override
   Widget build(BuildContext context) {
-    
+    bool lineChangeSelected = "Bant Değişikliği" == selectedCondition!;
  
 
 
@@ -295,7 +311,7 @@ void initState() {
       TextField(
         enabled: false,
 controller: operatorController,
-        decoration:const InputDecoration(label: Text('Operatör Adı')),
+        decoration: InputDecoration(label: Text(AppLocalizations.of(context)!.operatorName)),
        
         
       ),
@@ -308,9 +324,25 @@ controller: operatorController,
              onChanged: (v){
 setState(() { 
   selectedCondition = v;
+
+if(selectedCondition == conditions[Condition.undefined]){
+  setState(() {
+    isUndefined = true;
+    startTime = "00:00";
+    endTime = "00:00";
+    
+  });
+return;
+}
+else {
+setState(() {
+  isUndefined = false;
 });
+ 
+}});
+             
  }
-        
+  
        
  
  ),),
@@ -326,7 +358,7 @@ setState(() {
       ),
       const SizedBox(height: 10,),
      
-   const    Text('Çalışma',style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),textAlign: TextAlign.center,), 
+  Text(AppLocalizations.of(context)!.work,style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),textAlign: TextAlign.center,), 
       
       
       const Divider(height: 30,color: Colors.grey,),
@@ -335,7 +367,7 @@ setState(() {
                     Visibility(visible: selectedCondition != conditions[Condition.active],child:          Expanded(child: 
           Column(
             children: [
-             const Text('Başlangıç Saati'),
+              Text(AppLocalizations.of(context)!.startingTime),
               const SizedBox(height: 10,),
     Container(
       decoration: BoxDecoration(
@@ -358,6 +390,18 @@ setState(() {
 if(newTime == null){
 return;
 }
+if(isUndefined){
+setState(() {
+  startTime = "00:00";
+  
+});
+
+
+return;
+}
+
+
+
 final hour = newTime.hour.toString().padLeft(2,'0');
 final minute = newTime.minute.toString().padLeft(2,'0');
 setState(() {
@@ -375,7 +419,7 @@ setState(() {
           Expanded(child: 
           Column(
             children: [
-             const Text('Bitiş Saati'),
+             Text(AppLocalizations.of(context)!.endingTime),
               const SizedBox(height: 10,),
     Container(
 
@@ -399,6 +443,14 @@ setState(() {
 if(newTime == null){
 return;
 }
+
+if(isUndefined){
+setState(() {
+  endTime = "00:00";
+  return;
+});}
+
+
 final hour = newTime.hour.toString().padLeft(2,'0');
 final minute = newTime.minute.toString().padLeft(2,'0');
 setState(() {
@@ -424,10 +476,10 @@ setState(() {
           const Spacer(),
           ElevatedButton(onPressed: (){
             updateTime(ref.watch(connectionProvider)['server'], ref.watch(connectionProvider)['port']);
-          }, child:const Text('Saati Değiştir'))
+          }, child:Text(AppLocalizations.of(context)!.updateTime))
         ],
       ),
-    const  Text('Bant Değişikliği',style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),textAlign: TextAlign.center,), 
+     Text(AppLocalizations.of(context)!.updatingLine,style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),textAlign: TextAlign.center,), 
       
       
       const Divider(height: 30,color: Colors.grey,),
@@ -437,7 +489,7 @@ setState(() {
           Expanded(child: 
           Column(
             children: [
-            const  Text('Aktif Bant'),
+           Text(AppLocalizations.of(context)!.activeLine),
               const SizedBox(height: 10,),
                      DropdownButtonFormField<String>(value:widget.lineMovement.lineName,items: items.map((e) => DropdownMenuItem<String>(value: e,child: Text(e))).toList(), onChanged: null
         
@@ -451,10 +503,10 @@ setState(() {
              Expanded(child: 
           Column(
             children: [
-             const Text('Gideceği Bant'),
+              Text(AppLocalizations.of(context)!.sentLine),
               const SizedBox(height: 10,),
              
-       DropdownButtonFormField<String>(value: lineName,items: items.map((e) => DropdownMenuItem<String>(value: e,child: Text(e))).toList(), onChanged: (v){
+       DropdownButtonFormField<String>(value: lineName,items: items.map((e) => DropdownMenuItem<String>(value: e,child: Text(e))).toList(), onChanged: !lineChangeSelected  ? null : (v){
 if(v == lineName){
 return;
 }
@@ -479,8 +531,8 @@ setState(() {
 Row(
   mainAxisAlignment: MainAxisAlignment.end,
   children: [
-  const  Text('Bant Değişikliğini Onayla',style: TextStyle(fontSize: 12),),
-    Checkbox(value: lineChange, onChanged: (value){
+   Text(AppLocalizations.of(context)!.confirmUpdateLine,style: TextStyle(fontSize: 12),),
+    Checkbox(activeColor: Theme.of(context).colorScheme.primary,value: lineChange, onChanged: (value){
       setState(() {
         lineChange = value!;
       });
@@ -499,40 +551,22 @@ Row(
 
           TextButton(
           onPressed: (){Navigator.pop(context);}, 
-        child:const Text('İptal'))
+        child:Text(AppLocalizations.of(context)!.cancel))
         ,
   
-                 ElevatedButton(
-          onPressed: (){
-            showDialog(context: context, builder :(c)=>AlertDialog(
-              title:const Text('Silme işlemi'),
-              content:const Text("Operatörü silerseniz operatör herhangi bir banta sahip olmayacaktır. Operatörü silmek istediğinizden emin misiniz ?"),
-              actions: [
-                      TextButton(onPressed: (){
-                  Navigator.of(context).pop();
-                }, child:const Text('Hayır')),
-                TextButton(onPressed:(){
-                  deleteLineMovement(ref.watch(connectionProvider)['server'], ref.watch(connectionProvider)['port']);
-                }, child:const Text('Evet')),
-            
-              ],
-            ));
-        
-            
-          }, 
-          child:const  Text('Sil')),
+
         
           const SizedBox(width: 5,),
          ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green
+            backgroundColor: Theme.of(context).colorScheme.primary
           ),
-          onPressed: (){
+          onPressed: !lineChangeSelected ? null : (){
             updateLine(ref.watch(connectionProvider)['server'], ref.watch(connectionProvider)['port']);
         
             
           }, 
-          child:const  Text('Onayla'))],
+          child:  Text(AppLocalizations.of(context)!.confirm))],
       ),
 
     

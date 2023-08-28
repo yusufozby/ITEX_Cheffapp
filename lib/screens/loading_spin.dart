@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class LoadingSpin extends StatelessWidget {
   const LoadingSpin({super.key});
 
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return  Scaffold(
       body: 
       SafeArea(child:Column(
       children: [
@@ -29,7 +29,7 @@ Expanded(child:
     
     ),
     SizedBox(height: 20,),
-Text('İşlem yapılıyor...')
+Text(AppLocalizations.of(context)!.loading)
     ],
    )
    
